@@ -162,13 +162,17 @@
   };
 
   /* ---- 安卓 intent 目标 ----
+     注意分隔符：规范里写的是 #Intent;...，但当这个 URI 交给浏览器导航时，
+     # 会被当成 fragment 分隔符，# 之后的参数全部不参与协议解析被丢掉 ——
+     实测浏览器最终只发出 intent://settings/，scheme/action/end 全没了。
+     所以这里统一用 ?Intent;...，浏览器才会完整发出整串 URI。
      scheme=android.settings 是系统设置的 scheme，
-     package / component 用具体 action 定位到设置里的子页面。 */
+     action 用来定位到设置里的子页面。 */
   var INTENTS = {
-    settings: "intent://settings/#Intent;scheme=android.settings;end",
-    wifi:     "intent://settings/#Intent;scheme=android.settings;action=android.settings.WIFI_SETTINGS;end",
-    apps:     "intent://settings/#Intent;scheme=android.settings;action=android.settings.APPLICATION_SETTINGS;end",
-    battery:  "intent://settings/#Intent;scheme=android.settings;action=android._SETTINGS.BATTERY_SAVER_SETTINGS;end"
+    settings: "intent://settings/?Intent;scheme=android.settings;end",
+    wifi:     "intent://settings/?Intent;scheme=android.settings;action=android.settings.WIFI_SETTINGS;end",
+    apps:     "intent://settings/?Intent;scheme=android.settings;action=android.settings.APPLICATION_SETTINGS;end",
+    battery:  "intent://settings/?Intent;scheme=android.settings;action=android._SETTINGS.BATTERY_SAVER_SETTINGS;end"
   };
 
   var current = "baidu";
@@ -209,8 +213,16 @@
     btn.addEventListener("click", function () {
       var uri = INTENTS[btn.getAttribute("data-intent")];
       if (!uri) return;
-      // intent:// 不走 window.location（部分浏览器会拦截），
-      // 用一个临时 iframe 触发更稳，失败也不影响本页
+
+      /* 加 browser_fallback_url：安卓上若没有任何应用能接住这个 intent，
+         会回落到浏览器而不是留个空白页。
+         它必须排在 Intent 参数之后、end 之前。 */
+      if (uri.indexOf(";end") > 0) {
+        uri = uri.replace(/;end$/, ";S.browser_fallback_url=https%3A%2F%2Fwww.baidu.com;end");
+      }
+
+      // 用临时 iframe 触发：location.href 在部分浏览器会被拦，
+      // iframe 触发更稳，失败也不影响本页
       var f = document.createElement("iframe");
       f.style.display = "none";
       f.src = uri;
