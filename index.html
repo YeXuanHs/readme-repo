@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>搜索跳转 & 设置</title>
+<style>
+  :root {
+    --brand: #2f5ef3;
+    --brand-dark: #1e43c9;
+    --brand-soft: #eef3ff;
+    --line: #e8ecf4;
+    --ink: #131a2b;
+    --ink-2: #48536b;
+    --ink-3: #6b7688;
+    --radius: 12px;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f7f9ff;
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .card {
+    width: 100%; max-width: 560px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 18px 48px rgba(19, 26, 43, .07);
+    padding: 36px 34px 34px;
+  }
+
+  h1 { margin: 0 0 8px; font-size: 24px; letter-spacing: -.02em; }
+  .sub { margin: 0 0 28px; color: var(--ink-3); font-size: 14px; }
+
+  /* ---- 搜索源切换 ---- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab {
+    flex: 1 1 0;
+    padding: 11px 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font: inherit; font-weight: 600; font-size: 14.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: border-color .25s var(--ease), background-color .25s var(--ease), color .25s var(--ease);
+  }
+  .tab:hover { border-color: var(--brand); }
+  .tab.is-active { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+
+  /* ---- 输入框 ---- */
+  .box { display: flex; gap: 10px; }
+  .box input {
+    flex: 1 1 auto; min-width: 0;
+    height: 48px; padding: 0 16px;
+    border: 1px solid var(--line); border-radius: 10px;
+    font: inherit; color: var(--ink);
+    outline: none;
+    transition: border-color .25s var(--ease);
+  }
+  .box input:focus { border-color: var(--brand); }
+  .box input::placeholder { color: #a8b0bf; }
+
+  button.go {
+    flex: 0 0 auto;
+    height: 48px; padding: 0 22px;
+    border: 1px solid transparent; border-radius: 10px;
+    background: var(--brand); color: #fff;
+    font: inherit; font-weight: 600; font-size: 15px;
+    cursor: pointer;
+    transition: background-color .25s var(--ease);
+  }
+  button.go:hover { background: var(--brand-dark); }
+
+  /* ---- 一键打开系统设置 ---- */
+  .tools { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .tools__label {
+    font-size: 13px; font-weight: 600; color: var(--ink-3);
+    margin-bottom: 12px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 40px; padding: 0 16px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: #fff;
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--ink-2);
+    cursor: pointer;
+    transition: border-color .25s var(--ease), color .25s var(--ease);
+  }
+  .chip:hover { border-color: var(--brand); color: var(--brand); }
+
+  /* ---- 环境提示 ---- */
+  .note {
+    margin-top: 22px; padding: 12px 14px;
+    border-radius: 10px; background: #f8fafc;
+    font-size: 12.5px; line-height: 1.7; color: var(--ink-3);
+  }
+  .note b { color: var(--ink-2); }
+  /* 只有在非 Android 环境才提示，避免 Android 上显示多余的字 */
+  @media (min-width: 0px) { .note { display: none; } }
+  body:not(.is-android) .note { display: block; }
+
+  @media (max-width: 520px) {
+    .card { padding: 28px 20px; }
+    .box { flex-wrap: wrap; }
+    button.go { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>搜索跳转</h1>
+  <p class="sub">选个搜索引擎，输入内容直接跳转；安卓下还能一键唤起系统设置。</p>
+
+  <div class="tabs" id="tabs">
+    <button class="tab is-active" data-engine="baidu">百度</button>
+    <button class="tab" data-engine="bing">必应</button>
+  </div>
+
+  <div class="box">
+    <input id="kw" type="text" inputmode="search" autocomplete="off"
+           placeholder="输入要搜索的内容，回车跳转" />
+    <button class="go" id="go">搜索</button>
+  </div>
+
+  <div class="tools">
+    <div class="tools__label">一键打开</div>
+    <div class="chips">
+      <button class="chip" data-intent="settings">系统设置</button>
+      <button class="chip" data-intent="wifi">WLAN 设置</button>
+      <button class="chip" data-intent="apps">应用列表</button>
+      <button class="chip" data-intent="battery">电池优化</button>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>说明：</b>「一键打开」用的是 <code>intent://</code>，需要安卓浏览器（或能处理 intent 的浏览器）才生效；
+    在电脑或其他系统上点了不会有反应，这是正常的。搜索功能在所有平台都能用。
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- 搜索引擎 ---- */
+  var ENGINES = {
+    baidu: { name: "百度", url: "https://www.baidu.com/s?wd=" },
+    bing:  { name: "必应", url: "https://www.bing.com/search?q=" }
+  };
+
+  /* ---- 安卓 intent 目标 ----
+     scheme=android.settings 是系统设置的 scheme，
+     package / component 用具体 action 定位到设置里的子页面。 */
+  var INTENTS = {
+    settings: "intent://settings/#Intent;scheme=android.settings;end",
+    wifi:     "intent://settings/#Intent;scheme=android.settings;action=android.settings.WIFI_SETTINGS;end",
+    apps:     "intent://settings/#Intent;scheme=android.settings;action=android.settings.APPLICATION_SETTINGS;end",
+    battery:  "intent://settings/#Intent;scheme=android.settings;action=android._SETTINGS.BATTERY_SAVER_SETTINGS;end"
+  };
+
+  var current = "baidu";
+  var kw = document.getElementById("kw");
+  var goBtn = document.getElementById("go");
+
+  /* ---- 环境判定：只在非安卓时显示提示 ---- */
+  var ua = navigator.userAgent || "";
+  var isAndroid = /Android/i.test(ua);
+  if (!isAndroid) document.body.classList.add("is-not-android");
+
+  /* ---- 切换搜索引擎 ---- */
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (btn) {
+    btn.addEventListener("click", function () {
+      Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (b) {
+        b.classList.remove("is-active");
+      });
+      btn.classList.add("is-active");
+      current = btn.getAttribute("data-engine");
+      kw.placeholder = "输入要搜索的" + ENGINES[current].name + "内容，回车跳转";
+    });
+  });
+
+  /* ---- 搜索跳转：输入啥拼到 query 上就走 ---- */
+  function search() {
+    var q = kw.value.trim();
+    if (!q) { kw.focus(); return; }
+    // 直接用 location.assign 整页跳，避免被当成站内相对地址
+    window.location.assign(ENGINES[current].url + encodeURIComponent(q));
+  }
+  goBtn.addEventListener("click", search);
+  kw.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") search();
+  });
+
+  /* ---- 一键打开系统设置 ---- */
+  Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (btn) {
+    btn.addEventListener("click", function () {
+      var uri = INTENTS[btn.getAttribute("data-intent")];
+      if (!uri) return;
+      // intent:// 不走 window.location（部分浏览器会拦截），
+      // 用一个临时 iframe 触发更稳，失败也不影响本页
+      var f = document.createElement("iframe");
+      f.style.display = "none";
+      f.src = uri;
+      document.body.appendChild(f);
+      setTimeout(function () {
+        if (f.parentNode) f.parentNode.removeChild(f);
+      }, 200);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
